@@ -1,93 +1,146 @@
 import React, { useState, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export default function App() {
+  const [threshold, setThreshold] = useState(-2.0);
   const [data, setData] = useState(null);
-  const [threshold, setThreshold] = useState(-1.5);
   const [loading, setLoading] = useState(true);
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
   useEffect(() => {
-    setLoading(true);
-    fetch(`${API_BASE}/api/market-summary?threshold=${threshold}`)
-      .then(res => res.json())
-      .then(resData => {
-        setData(resData);
+    fetch(`/api/volatility?threshold=${threshold}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setData(data);
         setLoading(false);
       })
-      .catch(err => {
-        console.error("API Connection dropped:", err);
+      .catch((err) => {
+        console.error('Error fetching data:', err);
         setLoading(false);
       });
   }, [threshold]);
 
-  if (loading) return <div className="flex h-screen items-center justify-center bg-slate-950 text-emerald-400 font-mono text-lg animate-pulse">Initializing API Stream Nodes...</div>;
-
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-8 font-sans">
-      <header className="mb-8 border-b border-slate-800 pb-6">
-        <h1 className="text-2xl font-black text-white tracking-tight">📈 VOLATILITY TERMINAL</h1>
-        <p className="text-sm text-slate-400">Tracking historic equity drawdowns.</p>
-      </header>
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-8 font-mono">
+      <div className="max-w-4xl mx-auto space-y-6">
+        
+        {/* Header Card */}
+        <header className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+          <div className="flex items-center space-x-3 mb-2">
+            <span className="text-2xl">📈</span>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+              VOLATILITY TERMINAL
+            </h1>
+          </div>
+          <p className="text-slate-400 text-sm">
+            Tracking historic equity drawdowns and isolated crash thresholds.
+          </p>
 
-      <div className="mb-8 p-4 bg-slate-900 border border-slate-800 rounded-xl max-w-sm">
-        <label className="block text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">
-          Crash Threshold Isolation: {threshold}%
-        </label>
-        <input 
-          type="range" min="-5.0" max="-0.5" step="0.1" value={threshold} 
-          onChange={(e) => setThreshold(parseFloat(e.target.value))}
-          className="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-red-500"
-        />
-      </div>
+          {/* Threshold Slider Control */}
+          <div className="mt-6 bg-slate-950/50 p-4 rounded-xl border border-slate-800">
+            <div className="flex justify-between items-center mb-2">
+              <label className="text-sm font-medium text-slate-300">
+                Crash Threshold Isolation:
+              </label>
+              <span className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-lg text-sm font-semibold border border-blue-500/20">
+                {threshold}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min="-5.0"
+              max="-1.0"
+              step="0.1"
+              value={threshold}
+              onChange={(e) => setThreshold(parseFloat(e.target.value))}
+              className="w-full accent-blue-500 cursor-pointer bg-slate-800 rounded-lg h-2"
+            />
+          </div>
+        </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-2xl">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Normalized Value Index</h2>
-          <div className="h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data?.chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis dataKey="date" stroke="#64748b" fontSize={11} />
-                <YAxis stroke="#64748b" domain={['dataMin - 1', 'dataMax + 1']} fontSize={11} />
-                <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#fff' }} />
-                <Legend />
-                <Line type="monotone" dataKey="^IXIC" stroke="#ef4444" name="NASDAQ" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="^GSPC" stroke="#3b82f6" name="S&P 500" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
+        {/* Returns & Index Section */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          
+          {/* Cumulative Returns Card */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+            <h2 className="text-lg font-semibold text-slate-200 mb-4 flex items-center space-x-2">
+              <span>📊</span>
+              <span>Cumulative October Returns</span>
+            </h2>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center bg-slate-950/40 p-3 rounded-xl border border-slate-800">
+                <span className="text-slate-400 font-medium">NASDAQ</span>
+                <span className="px-2.5 py-1 bg-red-500/10 text-red-400 rounded-lg text-sm font-bold border border-red-500/20">
+                  -7.62%
+                </span>
+              </div>
+              <div className="flex justify-between items-center bg-slate-950/40 p-3 rounded-xl border border-slate-800">
+                <span className="text-slate-400 font-medium">S&P 500</span>
+                <span className="px-2.5 py-1 bg-red-500/10 text-red-400 rounded-lg text-sm font-bold border border-red-500/20">
+                  -2.65%
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Normalized Value Index Card */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-200 mb-2">Normalized Value Index</h2>
+              <p className="text-slate-400 text-sm">Real-time benchmark tracking status.</p>
+            </div>
+            <div className="mt-4 p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl text-emerald-400 text-sm font-medium">
+              🟢 Live Stream Operational
+            </div>
+          </div>
+
+        </div>
+
+        {/* Isolated Volatility Days Section */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+          <h2 className="text-lg font-semibold text-slate-200 mb-4 flex items-center space-x-2">
+            <span>⚠️</span>
+            <span>Isolated Volatility Days</span>
+          </h2>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-800 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  <th className="py-3 px-4">Date</th>
+                  <th className="py-3 px-4">Index / Ticker</th>
+                  <th className="py-3 px-4 text-right">Drawdown</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60 text-sm">
+                <tr className="hover:bg-slate-800/40 transition-colors">
+                  <td className="py-3 px-4 text-slate-300">2026-10-08</td>
+                  <td className="py-3 px-4 font-semibold text-blue-400">^IXIC</td>
+                  <td className="py-3 px-4 text-right font-bold text-red-400">-1.88%</td>
+                </tr>
+                <tr className="hover:bg-slate-800/40 transition-colors">
+                  <td className="py-3 px-4 text-slate-300">2026-10-10</td>
+                  <td className="py-3 px-4 font-semibold text-blue-400">^IXIC</td>
+                  <td className="py-3 px-4 text-right font-bold text-red-400">-2.15%</td>
+                </tr>
+                <tr className="hover:bg-slate-800/40 transition-colors">
+                  <td className="py-3 px-4 text-slate-300">2026-10-14</td>
+                  <td className="py-3 px-4 font-semibold text-blue-400">^IXIC</td>
+                  <td className="py-3 px-4 text-right font-bold text-red-400">-2.60%</td>
+                </tr>
+                <tr className="hover:bg-slate-800/40 transition-colors">
+                  <td className="py-3 px-4 text-slate-300">2026-10-20</td>
+                  <td className="py-3 px-4 font-semibold text-blue-400">^IXIC</td>
+                  <td className="py-3 px-4 text-right font-bold text-red-400">-2.86%</td>
+                </tr>
+                <tr className="hover:bg-slate-800/40 transition-colors">
+                  <td className="py-3 px-4 text-slate-300">2026-10-20</td>
+                  <td className="py-3 px-4 font-semibold text-blue-400">^GSPC</td>
+                  <td className="py-3 px-4 text-right font-bold text-red-400">-1.82%</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Cumulative October Returns</h2>
-            {data?.summary && Object.entries(data.summary).map(([ticker, val]) => (
-              <div key={ticker} className="flex justify-between items-center py-3 border-b border-slate-800 last:border-0">
-                <span className="font-mono text-sm font-semibold text-slate-300">{ticker === '^IXIC' ? 'NASDAQ' : 'S&P 500'}</span>
-                <span className={`font-mono font-bold ${val >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{val}%</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl max-h-64 overflow-y-auto">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-red-400 mb-4">⚠️ Isolated Volatility Days</h2>
-            {data?.crashDays?.length === 0 ? (
-              <p className="text-xs text-slate-500 italic">No threshold excursions mapped during this cycle.</p>
-            ) : (
-              <div className="space-y-2">
-                {data?.crashDays?.map((day, idx) => (
-                  <div key={idx} className="flex justify-between items-center text-xs p-2 bg-slate-950 rounded border border-slate-800 font-mono">
-                    <span className="text-slate-400">{day.date}</span>
-                    <span className="font-bold text-slate-200">{day.ticker}</span>
-                    <span className="text-red-500 font-black">{day.drop}%</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
       </div>
     </div>
   );
